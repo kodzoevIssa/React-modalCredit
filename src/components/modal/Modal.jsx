@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import "./Modal.css";
 
+function getPaymentWord(num) {
+  const lastDigit = num % 10;
+  const lastTwoDigits = num % 100;
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "рублей";
+  if (lastDigit === 1) return "рубль";
+  if (lastDigit >= 2 && lastDigit <= 4) return "рубля";
+  return "рублей";
+}
+
 function Modal({ onClose }) {
-  const [creditAmount, setCreditAmount] = useState("");
+  const [creditAmount, setCreditAmount] = useState(0);
   const [selectedMonths, setSelectedMonths] = useState(12);
   const [monthlyPayment, setMonthlyPayment] = useState(null);
   const [annualPayment, setAnnualPayment] = useState(null);
@@ -15,53 +24,24 @@ function Modal({ onClose }) {
     setTimeout(() => setIsOpen(true), 10);
   }, []);
 
-  const getPaymentWord = (num) => {
-    const lastDigit = num % 10;
-    const lastTwoDigits = num % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-      return "рублей";
-    }
-    if (lastDigit === 1) {
-      return "рубль";
-    }
-    if (lastDigit >= 2 && lastDigit <= 4) {
-      return "рубля";
-    }
-    return "рублей";
-  };
-
-  const handleCalculate = useCallback(() => {
-    if (!creditAmount || creditAmount <= 0) {
+  const calculatePayments = useCallback((amount, months) => {
+    if (!amount || amount <= 0) {
       setError(true);
       return;
     }
     setError(false);
-
-    const payment = creditAmount / selectedMonths;
-    const yearlyPayment = payment * 12;
-
+    const payment = amount / months;
     setMonthlyPayment(payment);
-    setAnnualPayment(yearlyPayment);
+    setAnnualPayment(payment * 12);
     setCalculated(true);
-  }, [creditAmount, selectedMonths]);
+  }, []);
+
+  const handleCalculate = () => calculatePayments(creditAmount, selectedMonths);
 
   const handleMonthChange = (months) => {
     setSelectedMonths(months);
-    if (calculated) {
-      const payment = creditAmount / months;
-      const yearlyPayment = payment * 12;
-
-      setMonthlyPayment(payment);
-      setAnnualPayment(yearlyPayment);
-    }
+    if (calculated) calculatePayments(creditAmount, months);
   };
-
-  useEffect(() => {
-    if (creditAmount && calculated) {
-      handleCalculate();
-    }
-  }, [creditAmount, calculated, handleCalculate]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -94,8 +74,8 @@ function Modal({ onClose }) {
           type="number"
           placeholder="Введите данные"
           className={`input-field ${error ? "input-error" : ""}`}
-          value={creditAmount}
-          onChange={(e) => setCreditAmount(e.target.value)}
+          value={creditAmount || ""}
+          onChange={(e) => setCreditAmount(Number(e.target.value))}
         />
         {error && (
           <p className="error-message">Поле обязательно для заполнения</p>
