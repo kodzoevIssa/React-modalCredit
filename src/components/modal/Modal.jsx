@@ -9,6 +9,11 @@ function Modal({ onClose }) {
   const [selectedOption, setSelectedOption] = useState("в месяц");
   const [calculated, setCalculated] = useState(false);
   const [error, setError] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setIsOpen(true), 10);
+  }, []);
 
   const getPaymentWord = (num) => {
     const lastDigit = num % 10;
@@ -17,15 +22,12 @@ function Modal({ onClose }) {
     if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
       return "рублей";
     }
-
     if (lastDigit === 1) {
       return "рубль";
     }
-
     if (lastDigit >= 2 && lastDigit <= 4) {
       return "рубля";
     }
-
     return "рублей";
   };
 
@@ -61,20 +63,30 @@ function Modal({ onClose }) {
     }
   }, [creditAmount, calculated, handleCalculate]);
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(onClose, 300);
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`modal-overlay ${isOpen ? "show" : ""}`}
+      onClick={handleClose}
+    >
+      <div
+        className={`modal ${isOpen ? "show" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h2>Платежи по кредиту</h2>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={handleClose}>
             &times;
           </button>
         </div>
 
         <p className="modal-text">
-          Введите сумму кредита и выберите срок, на который вы хотите его
-          оформить. Мы автоматически рассчитаем для вас ежемесячный платеж,
-          чтобы вы могли лучше спланировать свои финансы.
+          Введите сумму кредита и выберите срок. Мы автоматически рассчитаем ваш
+          ежемесячный платеж.
         </p>
 
         <label className="input-label">Ваша сумма кредита</label>
@@ -140,7 +152,7 @@ function Modal({ onClose }) {
 
         <button
           className={`add-btn ${creditAmount && calculated ? "" : "disabled"}`}
-          onClick={creditAmount && calculated ? onClose : null}
+          onClick={creditAmount && calculated ? handleClose : null}
           disabled={!creditAmount || !calculated}
         >
           Добавить
